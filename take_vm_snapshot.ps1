@@ -29,10 +29,8 @@
       }  
   }
   
-  
   #Global variables
   $user = $env:username
-
   $workingPath = "C:\Users\$user\Desktop\CBSL"
   
   #create working directories
@@ -61,14 +59,10 @@
   #convert cirros.img to cirros.vhdx
   & "$qemuDestination\qemu-img.exe" convert -O vhdx -o subformat=dynamic $cirrosPath $cirrosVHDX
  
-  ##################################################################
-  #                     Networking part                            #
-  ##################################################################
-  
-  New-VM -Name $vmName -VHDPath $cirrosVHDX -MemoryStartupBytes 1024MB
   #create VM with 1GB of RAM
+  New-VM -Name $vmName -VHDPath $cirrosVHDX -MemoryStartupBytes 1024MB
 
-  #if there is more than one virtual switch created, get it's name and connect the VM to it
+  #if there is more than one virtual switch created, get the first one's name and connect the VM to it
   if ((Get-VMSwitch).Name -ne $NULL)
   { 
     $swName = (Get-VMSwitch | Select-Object -first 1).Name
@@ -97,15 +91,9 @@
   #start the VM
   Start-VM -Name $vmName
 
-  ##################################################################
-  #                     Main part of the script                    #
-  ##################################################################
-
-
-
-    $VMSnapshotService = Get-WmiObject -Namespace root\virtualization\v2 -Class Msvm_VirtualSystemSnapshotService 
-    $SourceVm = Get-WmiObject -Namespace root\virtualization\v2 -Query "Select * From Msvm_ComputerSystem Where ElementName='$vmName'"
-    $Result = $VMSnapshotService.CreateSnapshot($SourceVm,"",2)
-
-    ProcessWMIJob($Result)
+  #create VM snapshot
+  $VMSnapshotService = Get-WmiObject -Namespace root\virtualization\v2 -Class Msvm_VirtualSystemSnapshotService 
+  $SourceVm = Get-WmiObject -Namespace root\virtualization\v2 -Query "Select * From Msvm_ComputerSystem Where ElementName='$vmName'"
+  $Result = $VMSnapshotService.CreateSnapshot($SourceVm,"",2)
+  ProcessWMIJob($Result)
     
